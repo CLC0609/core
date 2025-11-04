@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Training\Resources\AccountResource\RelationManagers;
+namespace App\Filament\Admin\Resources\AccountResource\RelationManagers;
 
-use App\Filament\Training\Resources\WaitingListResource;
+use App\Filament\Admin\Resources\WaitingListResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -49,7 +49,7 @@ class WaitingListsRelationManager extends RelationManager
                 Tables\Actions\ViewAction::make()
                     ->url(fn ($record) => WaitingListResource::getUrl('view', [
                         'record' => $record->waitingList,
-                    ], panel: 'training')),
+                    ])),
             ])
             ->bulkActions([])
             ->headerActions([]);

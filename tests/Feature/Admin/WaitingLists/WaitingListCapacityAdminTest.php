@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\TrainingPanel\WaitingLists;
+namespace Tests\Feature\Admin\WaitingLists;
 
 use App\Models\Mship\Account;
 use App\Models\Training\WaitingList;
