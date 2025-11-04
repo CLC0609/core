@@ -145,20 +145,36 @@
                         </ul>
                     </li>
 
-                    <li class="dropdown dropdown-large">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Operations <b class="caret"></b></a>
-                        <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
-                            <li class="col-sm-12">
-                                <ul>
-                                    <li><a href="{{ route('site.operations.landing') }}">Welcome</a></li>
-                                    <li><a href="{{ config('services.docs.url') }}">Documentation</a></li>
-                                    <li><a href="{{ route('site.airports') }}">Airfield Information</a></li>
-                                    <li><a href="{{ route('site.operations.sectors') }}">Area Sectors</a></li>
-                                    <li><a href="https://community.vatsim.uk/forum/166-atc-procedure-changes/">Procedure Changes</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
+                                <li class="dropdown-header">ATC Training</li>
+                                <li><a href="{{ route('site.atc.landing') }}">Welcome</a></li>
+                                <li><a href="{{ route('site.atc.newController') }}">New Controller</a></li>
+                                <li><a href="{{ route('site.atc.endorsements') }}">Rating Endorsements</a></li>
+                                <li><a href="https://moodle.vatsim.uk/course/index.php?categoryid=3">eLearning</a></li>
+                                <li><a href="{{ route('site.atc.mentor') }}">Become a Mentor</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="dropdown dropdown-large">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Membership <b class="caret"></b></a>
+                    <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
+                        <li class="col-sm-12">
+                            <ul>
+                                <li><a href="https://helpdesk.vatsim.uk/">Contact Us</a></li>
+                                <li class="divider"></li>
+
+                                <li class="dropdown-header">Waiting Lists</li>
+                                <li><a href="{{ route('mship.waiting-lists.index') }}">My Waiting Lists</a></li>
+                                <li class="divider"></li>
+
+                                <li class="dropdown-header">Vist / Transfer</li>
+                                <li><a href="{{ route('site.community.vt-guide') }}">Guide</a></li>
+                                <li><a href="{{ route('visiting.landing') }}">Dashboard</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
 
                 <li class="dropdown dropdown-large">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Policy <b class="caret"></b></a>
