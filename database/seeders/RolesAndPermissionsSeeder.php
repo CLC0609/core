@@ -68,6 +68,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'account.ban.edit.*',
             'account.ban.repeal.*',
             'account.note.create',
+            'account.qualification.manual-upgrade.atc',
 
             // Permissions & Access Permissions
             'permission.view.*',
@@ -80,14 +81,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'role.delete.*',
 
             // Visit Transfer System Permissions
-            // 'vt.access',
-            // 'vt.facility.view.*',
-            // 'vt.facility.create',
-            // 'vt.facility.update.*',
-            // 'vt.application.view.*',
-            // 'vt.application.accept.*',
-            // 'vt.application.reject.*',
-            // 'vt.application.complete.*',
+            'vt.access',
+            'vt.facility.view.*',
+            'vt.facility.create',
+            'vt.facility.update.*',
+            'vt.application.view.*',
+            'vt.application.accept.*',
+            'vt.application.reject.*',
+            'vt.application.complete.*',
+            'vt.application.cancel.*',
             // 'vt.application.reference.accept.*',
             // 'vt.application.reference.reject.*',
             // 'vt.application.check.modify.*',
@@ -109,10 +111,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'waiting-lists.remove-accounts.pilot',
             'waiting-lists.add-flags.*',
             'waiting-lists.delete.*',
+            'waiting-lists.delete.atc',
+            'waiting-lists.delete.pilot',
             'waiting-lists.create',
             'waiting-lists.admin.*',
             'waiting-lists.admin.atc',
             'waiting-lists.admin.pilot',
+
+            // Training Places Permissions
+            'training-places.view.*',
 
             // // Feedback System Permissions
             'feedback.access',

@@ -76,7 +76,8 @@ class ViewExamReport extends Page implements HasInfolists
                     default => 'gray',
                 })->getStateUsing(fn ($record) => $record->resultHuman()),
 
-                TextEntry::make('notes')->html()->label('Additional Comments'),
+                TextEntry::make('notes')->html()->extraAttributes(['style' => 'word-break:break-word'])->label('Additional Comments'),
+
             ])->columns(2)->extraAttributes(['class' => 'items-stretch']),
         ]);
     }
@@ -87,7 +88,7 @@ class ViewExamReport extends Page implements HasInfolists
             RepeatableEntry::make('criteria')->label('')->schema([
                 TextEntry::make('examCriteria.criteria')->label(null)->columnSpan(10),
                 PracticalExamCriteriaResult::make('result')->label('Result')->columnSpan(2),
-                TextEntry::make('notes')->html()->label('Notes')->columnSpan(12),
+                TextEntry::make('notes')->extraAttributes(['style' => 'word-break:break-word'])->html()->label('Notes')->columnSpan(12),
             ])->columns(12),
         ]);
     }

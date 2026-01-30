@@ -162,7 +162,6 @@
                                 <ul>
                                     <li class="divider"></li>
                                     <li class="dropdown-header">Endorsements</li>
-                                    <li><a href="{{ route('controllers.endorsements.gatwick_ground') }}">Gatwick Ground</a></li>
                                     <li><a href="{{ route('controllers.endorsements.heathrow_ground_s1') }}">Heathrow Ground (S1)</a></li>
                                     <li><a href="{{ route('site.atc.heathrow') }}">Heathrow</a></li>
                                 </ul>
@@ -170,16 +169,14 @@
                         </ul>
                     </li>
 
-                                <li class="dropdown-header">ATC Training</li>
-                                <li><a href="{{ route('site.atc.landing') }}">Welcome</a></li>
-                                <li><a href="{{ route('site.atc.newController') }}">New Controller</a></li>
-                                <li><a href="{{ route('site.atc.endorsements') }}">Rating Endorsements</a></li>
-                                <li><a href="https://moodle.vatsim.uk/course/index.php?categoryid=3">eLearning</a></li>
-                                <li><a href="{{ route('site.atc.mentor') }}">Become a Mentor</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
+                    <li class="dropdown dropdown-large">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Membership <b class="caret"></b></a>
+                        <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
+                            <li class="col-sm-12">
+                                <ul>
+                                    <li><a href="https://helpdesk.vatsim.uk/">Contact Us</a></li>
+                                    <li><a href="{{ route('networkdata.dashboard') }}">My Statistics</a></li>
+                                    <li class="divider"></li>
 
                 <li class="dropdown dropdown-large">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Membership <b class="caret"></b></a>
@@ -193,45 +190,18 @@
                                 <li><a href="{{ route('mship.waiting-lists.index') }}">My Waiting Lists</a></li>
                                 <li class="divider"></li>
 
-                                <li class="dropdown-header">Vist / Transfer</li>
-                                <li><a href="{{ route('site.community.vt-guide') }}">Guide</a></li>
-                                <li><a href="{{ route('visiting.landing') }}">Dashboard</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="dropdown dropdown-large">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Policy <b class="caret"></b></a>
-                    <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
-                        <li class="col-sm-12">
-                            <ul>
-                                <li><a href="{{ route('site.policy.division') }}">Division Policy</a></li>
-                                <li><a href="{{ route('site.policy.atc-training') }}">ATC Training Policy</a></li>
-                                <li><a href="{{ route('site.policy.visiting-and-transferring') }}">Visiting & Transferring Policy</a></li>
-                                <li><a href="{{ route('site.policy.terms') }}">Terms & Conditions</a></li>
-                                <li><a href="{{ route('site.policy.privacy') }}">Privacy Policy</a></li>
-                                <li><a href="{{ route('site.policy.data-protection') }}">Data Protection Policy</a></li>
-                                <li class="divider"></li>
-                                <li class="dropdown-header">Guidelines</li>
-                                <li><a href="{{ route('site.policy.branding') }}">Branding Guidelines</a></li>
-                                <li><a href="{{ route('site.policy.streaming') }}">Streaming Guidelines</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-                
-                <li class="dropdown dropdown-large">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">ATC Training Process<b class="caret"></b></a>
-                    <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
-                        <li class="col-sm-12">
-                            <ul>
-                                <li><a href="{{ route('site.training.s2-syllabus') }}">S2 Syllabus and Lesson Plans</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-                <li class="nav-item"><a href="https://community.vatsim.uk/downloads">Downloads</a></li>
+                    <li class="dropdown dropdown-large">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">ATC Training Process <b class="caret"></b></a>
+                        <ul class="dropdown-menu dropdown-menu-large row mainmenu_dropdown">
+                            <li class="col-sm-12">
+                                <ul>
+                                    <li><a href="{{ route('site.policy.training.s1-syllabus') }}">S1 Syllabus</a></li>
+                                    <li><a href="{{ route('site.policy.training.s2-syllabus') }}">S2 Syllabus</a></li>
+                                    <li><a href="{{ route('site.policy.training.c1-syllabus') }}">C1 Syllabus</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
 
                     <li class="dropdown dropdown-large">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">Policy <b class="caret"></b></a>
@@ -264,7 +234,7 @@
                                 <ul>
                                     <li class="dropdown-header">Communications</li>
                                     <li><a href="{{ route('site.community.teamspeak') }}">TeamSpeak</a></li>
-                                    <li><a href="{{ route('discord.show') }}">Discord</a></li>
+                                    <li><a href="{{ route('mship.manage.dashboard') }}">Discord</a></li>
                                     <li class="divider"></li>
                                     <li><a href="https://cts.vatsim.uk/">Training System</a></li>
                                     <li><a href="https://docs.vatsim.uk/">Docs Site</a></li>

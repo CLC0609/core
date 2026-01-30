@@ -2,12 +2,15 @@
 
 namespace App\Filament\Training\Pages\Exam;
 
+use App\Enums\ExamResultEnum;
+use App\Models\Atc\Position;
 use App\Models\Cts\ExamBooking;
 use App\Models\Cts\ExamCriteria;
 use App\Models\Cts\ExamCriteriaAssessment;
 use App\Models\Cts\PracticalResult;
 use App\Repositories\Cts\ExamAssessmentRepository;
 use App\Repositories\Cts\ExamResultRepository;
+use App\Services\Training\ExamForwardingService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Fieldset;
@@ -49,8 +52,21 @@ class ConductExam extends Page implements HasForms, HasInfolists
 
     public ExamBooking $examBooking;
 
+    public bool $hasUnsavedChanges = false;
+
+    public bool $isSaving = false;
+
+    public ?int $lastChangedAt = null;
+
+    public int $autosaveIdleSeconds = 1;
+
+    public int $autosaveMinInterval = 5;
+
+    public ?int $lastAutosaveAt = null;
+
     // save additional comments in session to persist across form submissions
     // this is because we don't save additional comments in the CTS database until the exam is completed
+
     #[Session('additionalComments.{examId}')]
     public ?string $additionalComments = '';
 
@@ -115,9 +131,10 @@ class ConductExam extends Page implements HasForms, HasInfolists
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('Save')->action(fn () => $this->save())
-                ->label('Save')
-                ->icon('heroicon-o-check'),
+            Action::make('Save')
+                ->action(fn () => $this->save())
+                ->label(fn () => $this->hasUnsavedChanges ? 'Save' : 'Saved')
+                ->icon(fn () => $this->hasUnsavedChanges ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check'),
         ];
     }
 
@@ -165,8 +182,8 @@ class ConductExam extends Page implements HasForms, HasInfolists
                             ->default('')
                             ->columnSpan(9)
                             ->disableToolbarButtons(['attachFiles', 'blockquote'])
-                            ->live(debounce: 1000)
-                            ->afterStateUpdated(fn () => $this->save()),
+                            ->live(debounce: 500)
+                            ->afterStateUpdated(fn () => $this->markDirty()),
                         Select::make("form.{$criteria->id}.grade")
                             ->label('Grade')
                             ->options(ExamCriteriaAssessment::gradeDropdownOptions())
@@ -174,7 +191,7 @@ class ConductExam extends Page implements HasForms, HasInfolists
                             ->columnSpan(3)
                             ->required()
                             ->live()
-                            ->afterStateUpdated(fn () => $this->save()),
+                            ->afterStateUpdated(fn () => $this->save(withNotification: false)),
                     ])->columns(12);
             }
         );
@@ -203,9 +220,9 @@ class ConductExam extends Page implements HasForms, HasInfolists
                 Select::make('exam_result')
                     ->label('Result')
                     ->options([
-                        'P' => 'Pass',
-                        'F' => 'Fail',
-                        'N' => 'Incomplete',
+                        ExamResultEnum::Pass->value => ExamResultEnum::Pass->human(),
+                        ExamResultEnum::Fail->value => ExamResultEnum::Fail->human(),
+                        ExamResultEnum::Incomplete->value => ExamResultEnum::Incomplete->human(),
                     ])
                     ->live()
                     ->columnSpan(3)
@@ -249,7 +266,28 @@ class ConductExam extends Page implements HasForms, HasInfolists
             ->success()
             ->send();
 
+        if ($examResultFormData['exam_result'] == ExamResultEnum::Incomplete->value) {
+            $this->resubmitForExam();
+        }
+
         $this->redirect(Exams::getUrl());
+    }
+
+    public function resubmitForExam()
+    {
+        $service = new ExamForwardingService;
+
+        $student = $this->examBooking->student;
+        $position = Position::query()
+            ->where('callsign', $this->examBooking->position_1)
+            ->first();
+        $exam_level = $this->examBooking->exam;
+
+        if ($exam_level == 'OBS') {
+            $service->forwardForObsExam($student, $position);
+        } else {
+            $service->forwardForExam($student, $position, Auth()->user()->id);
+        }
     }
 
     public function validateGradesBeforeSubmission(string $result): bool
@@ -289,6 +327,8 @@ class ConductExam extends Page implements HasForms, HasInfolists
 
     public function save($withNotification = true): void
     {
+        $this->isSaving = true;
+
         $formData = collect($this->form->getState())['form'];
 
         $flattenedFormData = collect($formData)->map(
@@ -310,11 +350,41 @@ class ConductExam extends Page implements HasForms, HasInfolists
             )
         );
 
+        $this->hasUnsavedChanges = false;
+        $this->isSaving = false;
+
         if ($withNotification) {
             Notification::make()
                 ->title('Exam report saved')
                 ->success()
                 ->send();
         }
+    }
+
+    public function autosave(): void
+    {
+        if ($this->isSaving || ! $this->hasUnsavedChanges) {
+            return;
+        }
+
+        $now = now()->timestamp;
+
+        if ($this->lastChangedAt && ($now - $this->lastChangedAt) < $this->autosaveIdleSeconds) {
+            return;
+        }
+
+        if ($this->lastAutosaveAt && ($now - $this->lastAutosaveAt) < $this->autosaveMinInterval) {
+            return;
+        }
+
+        $this->lastAutosaveAt = $now;
+
+        $this->save(withNotification: false);
+    }
+
+    public function markDirty(): void
+    {
+        $this->hasUnsavedChanges = true;
+        $this->lastChangedAt = now()->timestamp;
     }
 }
