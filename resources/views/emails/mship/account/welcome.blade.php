@@ -47,7 +47,7 @@
     Although there is a lot to learn, you will be in good company, surrounded by like-minded simming enthusiasts ready to help you get started.
 </p>
 <p style="margin-bottom: 2em;">
-    If you have any concerns or difficulties getting setup, <a href="mailto:member-services@vatsim.uk">our Member Services team</a> would be happy to help you.
+    If you have any concerns or difficulties getting setup, <a href="mailto:community@vatsim.uk">our Community department</a> would be happy to help you.
 </p>
 
 

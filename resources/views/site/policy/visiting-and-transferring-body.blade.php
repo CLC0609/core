@@ -12,7 +12,7 @@ This policy outlines the procedures and requirements for all VATSIM controllers 
 
 The policy sits below VATSIM UK’s Division Policy, VATEMEA’s Region Policy, VATSIM Transfer and Visiting Controller Policy, and other VATSIM Global Policies. Where discrepancies exist, this policies provisions will be overridden by theirs.
 
-Where required, the Member Services Director, Division Director, or Vice President Europe, Middle East, and Africa may waive policies and procedures stated within.
+Where required, the Community Director, Division Director, or Vice President Europe, Middle East, and Africa may waive policies and procedures stated within.
 
 VATSIM UK welcomes controllers from across the entire VATSIM network and aims to provide a suitable amount of training to enable them to confidently control along side our home members.
 
@@ -80,17 +80,17 @@ Visiting controllers of the OCA VG must control at least 1 meaningful session wi
 
 Visiting Controllers who do not meet the minimum hour requirement may have their visiting status suspended for 12 months. During this time visiting controllers will not be authorised to control any UK positions.
 
-Visiting Controllers who wish to return within 12 months of having their status suspended shall submit a ticket via the VATSIM UK helpdesk to Member Services. Once visiting right have been reissued to a visiting controller they will have 90 days to complete the minimum hour requirement else they will be returned to a suspended status.
+Visiting Controllers who wish to return within 12 months of having their status suspended shall submit a ticket via the VATSIM UK helpdesk to the Community department. Once visiting right have been reissued to a visiting controller they will have 90 days to complete the minimum hour requirement else they will be returned to a suspended status.
 
 Visiting controllers’ visiting rights that have been suspended will have them removed after 12 months of suspension. After such time, a new visiting controller application must be made on the visiting and transferring controller application system.
 
 ### 2.3 Removal of visiting rights
 
-The Division Director or Member Services Director may remove any visiting controllers visiting rights at any time.
+The Division Director or Community Director may remove any visiting controllers visiting rights at any time.
 
 It is necessary that Visiting Controllers familiarise themselves with the procedures for the positions they intend to control. Visiting Controllers who receive negative feedback may have their visiting rights removed.
 
-Visiting Controllers who are removed may appeal the decision in writing to the Member Services department on the helpdesk and must do so within 7 days of removal.
+Visiting Controllers who are removed may appeal the decision in writing to the Community department on the helpdesk and must do so within 7 days of removal.
 
 ### 2.4 Publication of active visiting controllers
 
@@ -103,7 +103,7 @@ A list of visiting controllers is published on the VATSIM UK website containing:
 
 ### 2.5 Non-standard visiting rights
 
-The Division Director or Member Services Director may grant visiting rights that do not conform the VGs to any visiting controller. Direct requests for non-standard visiting rights should be submitted to the Member Services department who will consider each request on a case by case basis.
+The Division Director or Community Director may grant visiting rights that do not conform the VGs to any visiting controller. Direct requests for non-standard visiting rights should be submitted to the Community department who will consider each request on a case by case basis.
 
 ## Section 3 Transferring Controllers
 
@@ -111,7 +111,7 @@ A transferring controller is a VATSIM member who is not currently a home member 
 
 ### 3.1 Transferring as a pilot/OBS rated member
 
-VATSIM members who do not hold a permanent controller rating (i.e. have an OBS rating) may apply to transfer to the UK as there is no rating to be validated. OBS members will be transferred into VATSIM UK subject to other applicable policies. OBS rated members are to apply to transfer by submitting a ticket to the Member Services Department on the VATSIM UK Helpdesk.
+VATSIM members who do not hold a permanent controller rating (i.e. have an OBS rating) may apply to transfer to the UK as there is no rating to be validated. OBS members will be transferred into VATSIM UK subject to other applicable policies. OBS rated members are to apply to transfer by submitting a ticket to the Community department on the VATSIM UK Helpdesk.
 
 ### 3.2 Transferring as an S1 controller
 
@@ -127,7 +127,7 @@ All visiting and transferring controllers are required to follow the same traini
 
 ### 4.1 Allocation of a Training Place
 
-When a training place for a visiting or transferring controller becomes available the Member Services team will offer you the place via email/ticket. You will have 84 hours (3.5 days) to respond before the place is offered to the next person. Places may be offered at any of the UK’s training aerodrome or area sectors.
+When a training place for a visiting or transferring controller becomes available the Community department will offer you the place via email/ticket. You will have 84 hours (3.5 days) to respond before the place is offered to the next person. Places may be offered at any of the UK’s training aerodrome or area sectors.
 
 If you choose to refuse the training place offer your application will be rejected.
 
@@ -198,7 +198,7 @@ Upon notification of a second unsuccessful validation from the Training Departme
 
 VATSIM controllers who have previously been a home member of VATSIM UK and who have completed an ATC exam in the UK may apply (and will be authorised) to retain visiting controller rights in the UK at the level/rating at which they were at the time of transferring out of the UK without having to complete a visiting validation as they have already previously completed one. They may also request to retain any endorsements they had while a member of VATSIM UK such as Heathrow or military.
 
-Controllers who wish to retain visiting rights after they leave must apply directly to the Member Services team via the helpdesk. This request must be made within 60 days of the member leaving the division.
+Controllers who wish to retain visiting rights after they leave must apply directly to the Community department via the helpdesk. This request must be made within 60 days of the member leaving the division.
 
 Controllers will not be granted visiting rights at a level above which they left the UK without having to complete a new visiting or transferring application.
 
@@ -214,7 +214,7 @@ Controllers with legacy visiting rights who wish to extend their visiting rights
 
 Those with legacy visiting rights who choose to apply to extend their rights and are then subsequently unsuccessful during the training and validation process will have ALL their visiting rights removed. As such the risk of losing all visiting right should be considered before applying.
 
-As this represents a substantial change to the visiting and transferring procedures of the last 5 years, the Member Services Director, in consultation with members concerned and other members of the DSG (such as Training and Division Directors) may choose to apply more flexible measures on a case by case basis in order to promote and nurture the visiting controller community within VATSIM UK.
+As this represents a substantial change to the visiting and transferring procedures of the last 5 years, the Community Director, in consultation with members concerned and other members of the DSG (such as Training and Division Directors) may choose to apply more flexible measures on a case by case basis in order to promote and nurture the visiting controller community within VATSIM UK.
 
 ## 6.2 Legacy Visiting Groups
 
