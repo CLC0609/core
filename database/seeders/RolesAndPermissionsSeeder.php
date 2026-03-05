@@ -47,12 +47,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'training.exams.conduct.twr',
             'training.exams.conduct.app',
             'training.exams.conduct.ctr',
+            'training.exams.override-result',
             'training.theory.access',
             'training.theory.view.*',
             'training.theory.view.obs',
             'training.theory.view.twr',
             'training.theory.view.app',
             'training.theory.view.ctr',
+            'training.theory.manage.*',
+            'training.theory.manage.obs',
+            'training.theory.manage.twr',
+            'training.theory.manage.app',
+            'training.theory.manage.ctr',
 
             // Account Permissions
             'account.self',
@@ -79,6 +85,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'role.create',
             'role.edit.*',
             'role.delete.*',
+            'role.manage-delegates.*',
 
             // Visit Transfer System Permissions
             'vt.access',
@@ -90,6 +97,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'vt.application.reject.*',
             'vt.application.complete.*',
             'vt.application.cancel.*',
+            'vt.status.revoke',
+            'vt.status.grant.manual',
             // 'vt.application.reference.accept.*',
             // 'vt.application.reference.reject.*',
             // 'vt.application.check.modify.*',
@@ -120,6 +129,10 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Training Places Permissions
             'training-places.view.*',
+            'training-places.manual-setup',
+            'training-places.revoke.*',
+            'training-places.loas.create.*',
+            'training-places.loas.end-early.*',
 
             // // Feedback System Permissions
             'feedback.access',

@@ -3,14 +3,14 @@
 namespace App\Filament\Training\Pages\Exam;
 
 use App\Enums\ExamResultEnum;
-use App\Models\Atc\Position;
 use App\Models\Cts\ExamBooking;
 use App\Models\Cts\ExamCriteria;
 use App\Models\Cts\ExamCriteriaAssessment;
 use App\Models\Cts\PracticalResult;
+use App\Models\Training\TrainingPlace\TrainingPlace;
 use App\Repositories\Cts\ExamAssessmentRepository;
 use App\Repositories\Cts\ExamResultRepository;
-use App\Services\Training\ExamForwardingService;
+use App\Services\Training\ExamResubmissionService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Fieldset;
@@ -247,6 +247,7 @@ class ConductExam extends Page implements HasForms, HasInfolists
 
     public function completeExam()
     {
+
         $examResultFormData = $this->examResultForm->getState();
 
         $this->save(withNotification: false);
@@ -266,28 +267,19 @@ class ConductExam extends Page implements HasForms, HasInfolists
             ->success()
             ->send();
 
-        if ($examResultFormData['exam_result'] == ExamResultEnum::Incomplete->value) {
-            $this->resubmitForExam();
+        // This handles a INCOMPLETE exam result
+        app(ExamResubmissionService::class)->handle(
+            examBooking: $this->examBooking,
+            result: $examResultFormData['exam_result'],
+            userId: auth()->id(),
+        );
+
+        // This handles a PASS exam result
+        if ($examResultFormData['exam_result'] == ExamResultEnum::Pass->value) {
+            $this->removeTrainingPlace();
         }
 
         $this->redirect(Exams::getUrl());
-    }
-
-    public function resubmitForExam()
-    {
-        $service = new ExamForwardingService;
-
-        $student = $this->examBooking->student;
-        $position = Position::query()
-            ->where('callsign', $this->examBooking->position_1)
-            ->first();
-        $exam_level = $this->examBooking->exam;
-
-        if ($exam_level == 'OBS') {
-            $service->forwardForObsExam($student, $position);
-        } else {
-            $service->forwardForExam($student, $position, Auth()->user()->id);
-        }
     }
 
     public function validateGradesBeforeSubmission(string $result): bool
@@ -386,5 +378,13 @@ class ConductExam extends Page implements HasForms, HasInfolists
     {
         $this->hasUnsavedChanges = true;
         $this->lastChangedAt = now()->timestamp;
+    }
+
+    public function removeTrainingPlace()
+    {
+        $studentAccount = $this->examBooking->studentAccount();
+        $waitingListAccountIds = $studentAccount->waitingListAccounts()->pluck('id');
+
+        TrainingPlace::whereIn('waiting_list_account_id', $waitingListAccountIds)->first()?->delete();
     }
 }

@@ -13,10 +13,16 @@ use App\Models\Training\TrainingPlace\TrainingPlace;
 use App\Models\Training\TrainingPosition\TrainingPosition;
 use App\Models\Training\WaitingList;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\TrainingPanel\BaseTrainingPanelTestCase;
 
+/**
+ * When asserting that a training place has been revoked/deleted, use
+ * assertSoftDeleted('training_places', ['id' => $id]) — not assertDatabaseMissing.
+ * TrainingPlace uses SoftDeletes, so the row remains with deleted_at set.
+ */
 class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
 {
     use DatabaseTransactions;
@@ -28,6 +34,9 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
         $this->panelUser->givePermissionTo('training-places.view.*');
 
         Livewire::actingAs($this->panelUser);
+
+        // disable training place observer
+        Event::fake();
     }
 
     public function test_page_can_be_accessed_with_valid_training_place()
@@ -106,6 +115,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
         // Create a session that matches the training position
         $session = Session::factory()->create([
             'position' => $cts_positions[0],
+            'taken' => 1,
             'taken_date' => now()->subDays(5),
             'student_id' => $trainingPlace->waitingListAccount->account->member->id,
         ]);
@@ -124,6 +134,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
         $otherSession = Session::factory()->create([
             'student_id' => $trainingPlace->waitingListAccount->account->member->id,
             'position' => 'EGKK_TWR', // Different position
+            'taken' => 1,
             'taken_date' => now()->subDays(5),
         ]);
 
@@ -142,6 +153,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'student_id' => $trainingPlace->waitingListAccount->account->member->id,
             'position' => $cts_positions[0],
             'taken_date' => now()->subDays(5),
+            'taken' => 1,
             'mentor_id' => $mentor->id,
         ]);
 
@@ -163,6 +175,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'noShow' => 0, // Explicitly set to 0 to ensure it's false
             'cancelled_datetime' => null, // Explicitly set to null
             'session_done' => 0, // Explicitly set to 0 to ensure it's false
+            'taken' => 1,
         ]);
 
         Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
@@ -182,6 +195,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'noShow' => 0,
             'cancelled_datetime' => null,
             'session_done' => 1,
+            'taken' => 1,
         ]);
 
         Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
@@ -202,6 +216,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'noShow' => 1, // Explicitly set to 1 to ensure it's true
             'cancelled_datetime' => null, // Explicitly set to null
             'session_done' => 0, // Explicitly set to 0
+            'taken' => 1,
         ]);
 
         Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
@@ -221,6 +236,7 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'cancelled_datetime' => now()->subDays(6)->toDateTimeString(),
             'noShow' => 0,
             'session_done' => 0,
+            'taken' => 1,
         ]);
 
         Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
@@ -265,12 +281,14 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
             'student_id' => $trainingPlace->waitingListAccount->account->member->id,
             'position' => 'EGLL_APP',
             'taken_date' => now()->subDays(5),
+            'taken' => 1,
         ]);
 
         $session2 = Session::factory()->create([
             'student_id' => $trainingPlace->waitingListAccount->account->member->id,
             'position' => 'EGLL_TWR',
             'taken_date' => now()->subDays(3),
+            'taken' => 1,
         ]);
 
         Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
@@ -439,6 +457,61 @@ class ViewTrainingPlaceTest extends BaseTrainingPanelTestCase
         return TrainingPlace::factory()->create([
             'waiting_list_account_id' => $waitingListAccount->id,
             'training_position_id' => $trainingPosition->id,
+        ]);
+    }
+
+    #[Test]
+    public function it_does_not_show_revoke_training_place_action_without_permission()
+    {
+        $trainingPlace = $this->createTrainingPlace();
+
+        $this->panelUser->roles()->detach();
+        $this->panelUser->refresh();
+
+        Livewire::actingAs($this->panelUser)
+            ->test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
+            ->assertActionHidden('revokeTrainingPlace');
+    }
+
+    #[Test]
+    public function it_shows_revoke_training_place_action_when_user_has_permission()
+    {
+        $trainingPlace = $this->createTrainingPlace();
+        $this->panelUser->givePermissionTo('training-places.revoke.*');
+
+        Livewire::test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
+            ->assertActionVisible('revokeTrainingPlace');
+    }
+
+    #[Test]
+    public function it_can_revoke_training_place_with_reason()
+    {
+        $trainingPlace = $this->createTrainingPlace();
+        $this->panelUser->givePermissionTo('training-places.revoke.*');
+
+        Livewire::actingAs($this->panelUser)
+            ->test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
+            ->assertStatus(200)
+            ->callAction('revokeTrainingPlace', data: ['reason' => 'test reason.'])
+            ->assertNotified();
+
+        $this->assertSoftDeleted('training_places', ['id' => $trainingPlace->id]);
+    }
+
+    #[Test]
+    public function it_adds_a_note_to_account_when_revoking_training_place()
+    {
+        $trainingPlace = $this->createTrainingPlace();
+        $this->panelUser->givePermissionTo('training-places.revoke.*');
+        $reason = 'test reason.';
+
+        Livewire::actingAs($this->panelUser)
+            ->test(ViewTrainingPlace::class, ['trainingPlaceId' => $trainingPlace->id])
+            ->callAction('revokeTrainingPlace', data: ['reason' => $reason]);
+
+        $this->assertDatabaseHas('mship_account_note', [
+            'account_id' => $trainingPlace->waitingListAccount->account->id,
+            'content' => "Training place revoked on {$trainingPlace->trainingPosition->position->callsign}. Reason: {$reason}",
         ]);
     }
 }

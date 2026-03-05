@@ -32,17 +32,22 @@ class WaitingLists extends BaseController
             }
         }
 
-        return view('mship.waiting-lists.index', [
-            'atcWaitingListAccounts' => $atcWaitingListAccounts,
-            'atcSelfEnrolmentLists' => WaitingListSelfEnrolment::getListsAccountCanSelfEnrol($request->user())->where('department', WaitingList::ATC_DEPARTMENT),
-            'pilotSelfEnrolmentLists' => WaitingListSelfEnrolment::getListsAccountCanSelfEnrol($request->user())->where('department', WaitingList::PILOT_DEPARTMENT),
-            'pilotWaitingListAccounts' => $pilotWaitingListAccounts,
-        ]);
+        $this->setTitle('Waiting Lists');
+
+        return $this->viewMake('mship.waiting-lists.index')
+            ->with('atcWaitingListAccounts', $atcWaitingListAccounts)
+            ->with('atcSelfEnrolmentLists', WaitingListSelfEnrolment::getListsAccountCanSelfEnrol($request->user())->where('department', WaitingList::ATC_DEPARTMENT))
+            ->with('pilotSelfEnrolmentLists', WaitingListSelfEnrolment::getListsAccountCanSelfEnrol($request->user())->where('department', WaitingList::PILOT_DEPARTMENT))
+            ->with('pilotWaitingListAccounts', $pilotWaitingListAccounts);
     }
 
     public function selfEnrol(WaitingList $waitingList, Request $request)
     {
         $this->authorize('selfEnrol', $waitingList);
+
+        if ($waitingList->isAtCapacity()) {
+            abort(403, 'This waiting list is currently at capacity and is not accepting new enrolments.');
+        }
 
         $waitingList->addToWaitingList($request->user(), $request->user());
 

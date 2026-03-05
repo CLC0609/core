@@ -7,7 +7,13 @@
 
     {{ $this->table }}
 
+    @livewire(\App\Livewire\Training\AvailabilityWarningsTable::class, ['trainingPlace' => $this->trainingPlace], key('availability-warnings-table'))
+
+    @livewire(\App\Livewire\Training\AvailabilityChecksTable::class, ['trainingPlace' => $this->trainingPlace], key('availability-checks-table'))
+
     @livewire(\App\Livewire\Training\TrainingPlaceSoloEndorsement::class, ['trainingPlace' => $this->trainingPlace], key('training-place-solo-endorsement'))
 
     @livewire(\App\Livewire\Training\RecentControllingTable::class, ['trainingPlace' => $this->trainingPlace], key('recent-controlling-table'))
+
+    @livewire(\App\Livewire\Training\LeaveOfAbsencesTable::class, ['trainingPlace' => $this->trainingPlace], key('leave-of-absences-table'))
 </x-filament-panels::page>

@@ -3,12 +3,16 @@
 namespace App\Filament\Admin\Resources\AccountResource\RelationManagers;
 
 use App\Filament\Admin\Resources\RoleResource;
+use App\Services\Roles\DelegateRoleManagementService;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role;
 
 class RolesRelationManager extends RelationManager
 {
@@ -30,7 +34,26 @@ class RolesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name'),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()->preloadRecordSelect()->label('Add / Attach')->color('primary'),
+                Tables\Actions\AttachAction::make()->preloadRecordSelect()->label('Add / Attach')->color('primary')
+                    ->recordSelectOptionsQuery(function (Builder $query) {
+                        $service = new DelegateRoleManagementService;
+
+                        return $service->getManageableRolesQuery($query, auth()->user());
+                    })
+                    ->before(function (Tables\Actions\AttachAction $action, array $data) {
+                        $service = new DelegateRoleManagementService;
+                        $role = Role::find($data['recordId']);
+
+                        if (! auth()->user()->can($service->delegatePermissionName($role))) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Permission denied')
+                                ->body('You do not have permission to assign this role.')
+                                ->send();
+
+                            $action->cancel();
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->resource(RoleResource::class),
@@ -40,7 +63,7 @@ class RolesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->deselectRecordsAfterCompletion()
                     ->label('Detach Selected')
-                    ->authorize(fn () => auth()->user()->can('adm/mship/account/*/roles/*/detach'))
+                    ->authorize(fn () => auth()->user()->can('account.edit-roles.*'))
                     ->action(function (Collection $records) {
                         $account = $this->getOwnerRecord();
 
@@ -53,6 +76,19 @@ class RolesRelationManager extends RelationManager
                             ->success()
                             ->send();
                     }),
-            ]);
+            ])
+            ->description('Only roles you have been delegated permission to manage are shown. There may be additional roles assigned to this account that are not visible to you.')
+            ->modifyQueryUsing(function (Builder $query) {
+                $service = new DelegateRoleManagementService;
+
+                return $service->getManageableRolesQuery($query, auth()->user());
+            });
+    }
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        $user = auth()->user();
+
+        return $user->can('account.edit-roles.*') || $user->permissions()->where('name', 'like', 'account.edit-roles.%')->exists();
     }
 }

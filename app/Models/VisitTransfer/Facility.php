@@ -5,6 +5,7 @@ namespace App\Models\VisitTransfer;
 use App\Exceptions\VisitTransfer\Facility\DuplicateFacilityNameException;
 use App\Models\Contact;
 use App\Models\Model;
+use App\Models\Mship\Qualification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Malahierba\PublicId\PublicId;
@@ -106,7 +107,12 @@ class Facility extends Model
         'stage_reference_quantity',
         'stage_checks',
         'auto_acceptance',
+        'minimum_atc_qualification_id',
+        'maximum_atc_qualification_id',
+        'minimum_pilot_qualification_id',
+        'maximum_pilot_qualification_id',
         'public',
+        'waiting_list_id',
     ];
 
     public function routeNotificationForMail()
@@ -263,6 +269,26 @@ class Facility extends Model
         }
     }
 
+    public function minimumATCQualification()
+    {
+        return $this->belongsTo(Qualification::class, 'minimum_atc_qualification_id');
+    }
+
+    public function maximumATCQualification()
+    {
+        return $this->belongsTo(Qualification::class, 'maximum_atc_qualification_id');
+    }
+
+    public function minimumPilotQualification()
+    {
+        return $this->belongsTo(Qualification::class, 'minimum_pilot_qualification_id');
+    }
+
+    public function maximumPilotQualification()
+    {
+        return $this->belongsTo(Qualification::class, 'maximum_pilot_qualification_id');
+    }
+
     private function guardAgainstDuplicateFacilityName($proposedName, $excludeCurrent = false)
     {
         if ($excludeCurrent && self::where('id', '!=', $excludeCurrent)
@@ -275,5 +301,10 @@ class Facility extends Model
         if (! $excludeCurrent && self::where('name', 'LIKE', $proposedName)->count() > 0) {
             throw new DuplicateFacilityNameException($proposedName);
         }
+    }
+
+    public function waitingList()
+    {
+        return $this->belongsTo(\App\Models\Training\WaitingList::class, 'waiting_list_id');
     }
 }

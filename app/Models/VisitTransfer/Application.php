@@ -20,10 +20,13 @@ use App\Exceptions\VisitTransfer\Application\AttemptingToTransferToNonTrainingFa
 use App\Exceptions\VisitTransfer\Application\CheckOutcomeAlreadySetException;
 use App\Exceptions\VisitTransfer\Application\DuplicateRefereeException;
 use App\Exceptions\VisitTransfer\Application\FacilityHasNoCapacityException;
+use App\Exceptions\VisitTransfer\Application\RatingRequirementNotMetException;
 use App\Exceptions\VisitTransfer\Application\TooManyRefereesException;
 use App\Models\Model;
 use App\Models\Mship\Account;
 use App\Models\Mship\State;
+use App\Models\Training\WaitingList\Removal;
+use App\Models\Training\WaitingList\RemovalReason;
 use App\Models\Traits\HasStatus;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -545,12 +548,43 @@ class Application extends Model
         return $this->facility ? $this->facility->name : 'Not selected';
     }
 
+    public function meetsRatingRequirements(Facility $facility)
+    {
+        if ($facility->training_team === 'atc') {
+            $userRating = $this->account->qualification_atc?->vatsim;
+            $minQual = $facility->minimumATCQualification?->vatsim;
+            $maxQual = $facility->maximumATCQualification?->vatsim;
+        } else {
+            $userRating = $this->account->qualification_pilot?->vatsim;
+            $minQual = $facility->minimumPilotQualification?->vatsim;
+            $maxQual = $facility->maximumPilotQualification?->vatsim;
+        }
+
+        if ($userRating === null) {
+            return false;
+        }
+
+        if ($minQual && $userRating < $minQual) {
+            return false;
+        }
+
+        if ($maxQual && $userRating > $maxQual) {
+            return false;
+        }
+
+        return true;
+    }
+
     /** Business logic. */
     public function setFacility(Facility $facility)
     {
         $this->guardAgainstTransferringToANonTrainingFacility($facility);
 
         $this->guardAgainstApplyingToAFacilityWithNoCapacity($facility);
+
+        if (! $this->meetsRatingRequirements($facility)) {
+            throw new RatingRequirementNotMetException($facility);
+        }
 
         $this->training_required = $facility->training_required;
         $this->statement_required = $facility->stage_statement_enabled;
@@ -699,7 +733,7 @@ class Application extends Model
         }
     }
 
-    public function accept($staffComment = null, ?Account $actor = null)
+    public function accept($staffComment = null, ?Account $actor = null, bool $addToWaitingList = false)
     {
         $this->guardAgainstUnAcceptableApplication();
 
@@ -721,6 +755,13 @@ class Application extends Model
 
         if ($this->is_transfer) {
             $this->account->addState(State::findByCode('TRANSFERRING'));
+        }
+        if ($addToWaitingList && $this->facility?->waitingList) {
+
+            $waitingList = $this->facility->waitingList;
+            if (! $waitingList->includesAccount($this->account)) {
+                $waitingList->addToWaitingList($this->account, $actor);
+            }
         }
 
         event(new ApplicationAccepted($this));
@@ -744,6 +785,18 @@ class Application extends Model
 
         if ($this->is_transfer) {
             $this->account->removeState(State::findByCode('TRANSFERRING'));
+        }
+
+        if ($this->facility?->waitingList) {
+            $waitingList = $this->facility->waitingList;
+            if ($waitingList->includesAccount($this->account)) {
+                $removal = new Removal(
+                    reason: RemovalReason::CancelledVTApplication,
+                    removedBy: $actor?->id,
+                );
+
+                $waitingList->removeFromWaitingList($this->account, $removal);
+            }
         }
 
         event(new ApplicationCancelled($this));
