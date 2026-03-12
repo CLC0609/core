@@ -1,6 +1,18 @@
 @extends('visit-transfer.site.application._layout')
 
 @section('vt-content')
+    @if($application->isExemptFromATCRatingRequirements())
+        <div class="row">
+            <div class="col-md-12">
+                <div class="alert alert-warning">
+                    <strong>I1/I3 Controller Notice:</strong>
+                    As an I1 or I3 rated controller to, please open a ticket on the <a href="https://helpdesk.vatsim.uk/" target="_blank">helpdesk</a> to the Community Team,
+                    stating which facility you would like to visit or transfer to.
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-md-8">
             @include('components.html.panel_open', [
@@ -39,18 +51,6 @@
             </div>
             @include('components.html.panel_close')
         </div>
-
-        @if($application->isExemptFromATCRatingRequirements())
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="alert alert-info">
-                        <strong>I1/I3 Controller Notice:</strong>
-                        As an I1 or I3 rated controller to, please open a ticket on the <a href="https://helpdesk.vatsim.uk/" target="_blank">helpdesk</a> to the Community Team,
-                        stating which facility you would like to visit or transfer to.
-                    </div>
-                </div>
-            </div>
-        @endif
 
         <div class="col-md-4">
             @include('components.html.panel_open', [

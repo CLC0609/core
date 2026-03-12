@@ -583,7 +583,7 @@ class Application extends Model
     public function isExemptFromATCRatingRequirements(): bool
     {
         // I1 and I3 controllers should be exempt from rating requirements via manual posting
-        return in_array($this->account->qualification_atc?->code, ['I1', 'I3']);
+        return in_array($this->account->qualifications_atc_training?->first()->code, ['I1', 'I3']);
     }
 
     /** Business logic. */
