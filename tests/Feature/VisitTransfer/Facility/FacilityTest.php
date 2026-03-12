@@ -386,4 +386,85 @@ class FacilityTest extends BaseAdminTestCase
             'waiting_list_id' => $waitingList->id,
         ]);
     }
+
+    #[Test]
+    public function is_exempt_from_atc_rating_requirements_returns_true_for_i1()
+    {
+        $i1 = Qualification::ofType('training_atc')
+            ->where('code', 'I1')
+            ->first();
+
+        $this->internationalUser->addQualification($i1);
+
+        $application = new Application(['account_id' => $this->internationalUser->id]);
+        $this->assertTrue($application->isExemptFromATCRatingRequirements());
+    }
+
+    #[Test]
+    public function is_exempt_from_atc_rating_requirements_returns_true_for_i3()
+    {
+        $i3 = Qualification::ofType('training_atc')
+            ->where('code', 'I3')
+            ->first();
+
+        $this->internationalUser->addQualification($i3);
+
+        $application = new Application(['account_id' => $this->internationalUser->id]);
+        $this->assertTrue($application->isExemptFromATCRatingRequirements());
+    }
+
+    #[Test]
+    public function is_exempt_from_atc_rating_requirements_returns_false_for_standard_rating()
+    {
+        $c1 = Qualification::ofType(QualificationTypeEnum::ATC->value)
+            ->where('code', 'C1')
+            ->first();
+
+        $this->internationalUser->addQualification($c1);
+
+        $application = new Application(['account_id' => $this->internationalUser->id]);
+        $this->assertFalse($application->isExemptFromATCRatingRequirements());
+    }
+
+    #[Test]
+    public function facility_page_shows_instructor_notice_for_i1_atc_application()
+    {
+        $this->insertFacilities();
+
+        $i1 = Qualification::ofType('training_atc')
+            ->where('code', 'I1')
+            ->first();
+
+        $this->internationalUser->addQualification($i1);
+
+        $application = $this->internationalUser->createVisitingTransferApplication([
+            'type' => Application::TYPE_VISIT,
+            'training_team' => 'atc',
+        ]);
+
+        $this->actingAs($this->internationalUser)
+            ->get(route('visiting.application.facility', $application->public_id))
+            ->assertSee('I1/I3 Controller Notice');
+    }
+
+    #[Test]
+    public function facility_page_does_not_show_instructor_notice_for_standard_atc_application()
+    {
+        $this->insertFacilities();
+
+        $s1 = Qualification::ofType(QualificationTypeEnum::ATC->value)
+            ->where('code', 'S1')
+            ->first();
+
+        $this->internationalUser->addQualification($s1);
+
+        $application = $this->internationalUser->createVisitingTransferApplication([
+            'type' => Application::TYPE_VISIT,
+            'training_team' => 'atc',
+        ]);
+
+        $this->actingAs($this->internationalUser)
+            ->get(route('visiting.application.facility', $application->public_id))
+            ->assertDontSee('I1/I3 Controller Notice');
+    }
 }

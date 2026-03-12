@@ -551,11 +551,9 @@ class Application extends Model
     public function meetsRatingRequirements(Facility $facility)
     {
         if ($facility->training_team === 'atc') {
-            $userRating = $this->account->qualification_atc?->vatsim;
+            $userRating = $this->account->qualification_atc?->vatsim;#
 
-            // I1 and I3 controllers should be exempt from rating requirements via manual posting
-            $atcCode = $this->account->qualification_atc?->code;
-            if (in_array($atcCode, ['I1', 'I3'])) {
+            if ($this->isExemptFromATCRatingRequirements()) {
                 return true;
             }
 
@@ -580,6 +578,12 @@ class Application extends Model
         }
 
         return true;
+    }
+
+    public function isExemptFromATCRatingRequirements(): bool
+    {
+        // I1 and I3 controllers should be exempt from rating requirements via manual posting
+        return in_array($this->account->qualification_atc?->code, ['I1', 'I3']);
     }
 
     /** Business logic. */
