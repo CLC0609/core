@@ -552,6 +552,13 @@ class Application extends Model
     {
         if ($facility->training_team === 'atc') {
             $userRating = $this->account->qualification_atc?->vatsim;
+
+            // I1 and I3 controllers should be exempt from rating requirements via manual posting
+            $atcCode = $this->account->qualification_atc?->code;
+            if (in_array($atcCode, ['I1', 'I3'])) {
+                return true;
+            }
+
             $minQual = $facility->minimumATCQualification?->vatsim;
             $maxQual = $facility->maximumATCQualification?->vatsim;
         } else {
