@@ -8,30 +8,30 @@ use App\Models\Cts\ExamCriteria;
 use App\Models\Cts\ExamCriteriaAssessment;
 use App\Models\Cts\PracticalResult;
 use App\Services\Training\ExamResubmissionService;
-use Filament\Forms\Components\Fieldset;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Get;
-use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 use Filament\Infolists\Contracts\HasInfolists;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Support\Enums\MaxWidth;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 
 class ViewExamReport extends Page implements HasInfolists
 {
     use InteractsWithInfolists;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static string $view = 'filament.training.pages.view-exam-report';
+    protected string $view = 'filament.training.pages.view-exam-report';
 
     protected static ?string $slug = 'exams/report/{examId}';
 
@@ -41,35 +41,44 @@ class ViewExamReport extends Page implements HasInfolists
 
     public function mount(): void
     {
-        // Check basic training exams access
-        if (! auth()->user()->can('training.exams.access')) {
+        $this->practicalResult = PracticalResult::where('examid', $this->examId)
+            ->with('examBooking')
+            ->firstOrFail();
+
+        $user = auth()->user();
+
+        // Students may always view their own report
+        if ($this->practicalResult->student?->cid === $user->id) {
+            return;
+        }
+
+        // Examiner path
+        if (! $user->can('training.exams.access')) {
             abort(403, 'You do not have permission to access training exams.');
         }
 
-        $this->practicalResult = PracticalResult::where('examid', $this->examId)->firstOrFail();
+        if (! $this->practicalResult->examBooking) {
+            abort(404, 'Invalid exam booking.');
+        }
 
-        // Check specific conduct permission for this exam level
-        if ($this->practicalResult->examBooking) {
-            $examLevel = strtolower($this->practicalResult->examBooking->exam);
-            if (! auth()->user()->can("training.exams.conduct.{$examLevel}")) {
-                abort(403, 'You do not have permission to view this exam report.');
-            }
-        } else {
-            abort(403, 'Invalid exam booking.');
+        $examLevel = strtolower($this->practicalResult->examBooking->exam);
+
+        if (! $user->can("training.exams.conduct.{$examLevel}")) {
+            abort(403, 'You do not have permission to view this exam report.');
         }
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist->record($this->practicalResult)->schema([
-            Section::make('')->schema([
-                Section::make('Student')->schema([
+        return $schema->record($this->practicalResult)->components([
+            Section::make('')->columnSpanFull()->schema([
+                Section::make('Student')->columnSpanFull()->schema([
                     TextEntry::make('student.account.name')->label('Name'),
                     TextEntry::make('student.account.id')->label('CID'),
                     TextEntry::make('examBooking.studentQualification.name')->label('Qualification'),
                 ])->columns(2)->columnSpan(1)->extraAttributes(['class' => 'h-full']),
 
-                Section::make('Exam')->schema([
+                Section::make('Exam')->columnSpanFull()->schema([
                     TextEntry::make('examBooking.exam')->label('Exam'),
                     TextEntry::make('examBooking.position_1')->label('Position'),
                     TextEntry::make('examBooking.start_date')->label('Date'),
@@ -80,37 +89,37 @@ class ViewExamReport extends Page implements HasInfolists
             ])->columns(2)->extraAttributes(['class' => 'items-stretch']),
 
             Section::make('Exam Result')
+                ->columnSpanFull()
                 ->headerActions([
                     Action::make('override_result')
                         ->icon('heroicon-m-pencil-square')
                         ->color('warning')
-                        ->modalWidth(MaxWidth::SevenExtraLarge)
+                        ->modalWidth(Width::SevenExtraLarge)
                         ->modalSubmitActionLabel('Override')
                         ->visible(fn () => auth()->user()->can('training.exams.override-result'))
-                        ->form([
-                            \Filament\Forms\Components\Section::make('Exam Result')->columns(2)->schema([
+                        ->schema([
+                            Section::make('Exam Result')->columns(2)->columnSpanFull()->schema([
                                 Select::make('previous_exam_result')
                                     ->label('Previous Result')
                                     ->default($this->practicalResult->result)
-                                    ->options([
-                                        ExamResultEnum::Pass->value => ExamResultEnum::Pass->human(),
-                                        ExamResultEnum::Fail->value => ExamResultEnum::Fail->human(),
-                                        ExamResultEnum::Incomplete->value => ExamResultEnum::Incomplete->human(),
-                                    ])
+                                    ->options(fn () => $this->practicalResult->examBooking->isPilotExam()
+                                        ? ExamResultEnum::pilotOptions()
+                                        : ExamResultEnum::atcOptions()
+                                    )
                                     ->required()
                                     ->disabled()
                                     ->columns(1)
                                     ->dehydrated(true),
+
                                 Select::make('exam_result')
                                     ->label('New Result')
                                     ->default($this->practicalResult->result)
                                     ->live()
                                     ->columns(1)
-                                    ->options([
-                                        ExamResultEnum::Pass->value => ExamResultEnum::Pass->human(),
-                                        ExamResultEnum::Fail->value => ExamResultEnum::Fail->human(),
-                                        ExamResultEnum::Incomplete->value => ExamResultEnum::Incomplete->human(),
-                                    ])
+                                    ->options(fn () => $this->practicalResult->examBooking->isPilotExam()
+                                        ? ExamResultEnum::pilotOptions()
+                                        : ExamResultEnum::atcOptions()
+                                    )
                                     ->required(),
                                 Textarea::make('reason')
                                     ->label('Reason for exam result change')
@@ -119,8 +128,10 @@ class ViewExamReport extends Page implements HasInfolists
                                     ->columnSpanFull(),
                             ]),
 
-                            \Filament\Forms\Components\Section::make('Exam Criteria')
-                                ->visible(fn ($get) => $get('exam_result') !== $this->practicalResult->result
+                            Section::make('Exam Criteria')
+                                ->columnSpanFull()
+                                ->visible(fn ($get) => ! $this->practicalResult->examBooking->isPilotExam()
+                                    && $get('exam_result') !== $this->practicalResult->result
                                 )
                                 ->schema(function () {
                                     $criteria = ExamCriteria::byType($this->practicalResult->examBooking->exam)->get();
@@ -129,6 +140,7 @@ class ViewExamReport extends Page implements HasInfolists
                                     return $criteria->map(function (ExamCriteria $criteria) use ($existingAssessments) {
                                         return Fieldset::make("criteria_updates.{$criteria->id}")
                                             ->label($criteria->criteria)
+                                            ->columnSpanFull()
                                             ->schema([
                                                 Select::make("criteria_updates.previous_{$criteria->id}.grade")
                                                     ->label('Previous Grade')
@@ -162,6 +174,7 @@ class ViewExamReport extends Page implements HasInfolists
                 ->schema([
                     TextEntry::make('result')->label('Result')->badge()->color(fn ($state) => match ($state) {
                         'Passed' => 'success',
+                        'Partial Pass' => 'warning',
                         'Failed' => 'danger',
                         'Incomplete' => 'warning',
                         default => 'gray',
@@ -173,9 +186,9 @@ class ViewExamReport extends Page implements HasInfolists
         ]);
     }
 
-    public function criteriaInfoList(Infolist $infolist): Infolist
+    public function criteriaInfoList(Schema $schema): Schema
     {
-        return $infolist->record($this->practicalResult)->schema([
+        return $schema->record($this->practicalResult)->components([
             RepeatableEntry::make('criteria')->label('')->schema([
                 TextEntry::make('examCriteria.criteria')->label(null)->columnSpan(10),
                 PracticalExamCriteriaResult::make('result')->label('Result')->columnSpan(2),

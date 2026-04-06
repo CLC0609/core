@@ -3,26 +3,29 @@
 namespace App\Filament\Training\Pages\TrainingPlace;
 
 use App\Filament\Training\Pages\TrainingPlace\Widgets\TrainingPlaceStatsWidget;
-use App\Filament\Training\Resources\TrainingPlaceResource\Pages\ListTrainingPlaces;
+use App\Filament\Training\Resources\TrainingPlaces\Pages\ListTrainingPlaces;
 use App\Models\Atc\Position;
 use App\Models\Cts\ExamBooking;
 use App\Models\Cts\Member;
+use App\Models\Mship\Account;
 use App\Models\Training\TrainingPlace\TrainingPlace;
+use App\Models\Training\TrainingPosition\TrainingPosition;
 use App\Repositories\Cts\SessionRepository;
 use App\Services\Training\ExamForwardingService;
+use Exception;
 use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 use Filament\Infolists\Contracts\HasInfolists;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Tables\Actions\ViewAction;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -35,11 +38,11 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
     use InteractsWithInfolists;
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static string $view = 'filament.training.pages.view-training-place';
+    protected string $view = 'filament.training.pages.view-training-place';
 
     protected static ?string $slug = 'training-places/{trainingPlaceId}';
 
@@ -50,13 +53,13 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
     public function mount(): void
     {
         // Check training places view permission
-        /** @var \App\Models\Mship\Account|null $user */
+        /** @var Account|null $user */
         $user = Auth::user();
         if (! $user || ! $user->can('training-places.view.*')) {
             abort(403, 'You do not have permission to view training places.');
         }
 
-        $this->trainingPlace = TrainingPlace::where('id', $this->trainingPlaceId)->with('waitingListAccount', 'trainingPosition')->firstOrFail();
+        $this->trainingPlace = TrainingPlace::withTrashed()->where('id', $this->trainingPlaceId)->with('waitingListAccount', 'trainingPosition')->firstOrFail();
     }
 
     public function getTitle(): string|Htmlable
@@ -81,10 +84,10 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
             Action::make('forwardForExam')
                 ->label('Forward for Practical Exam')
                 ->icon('heroicon-o-arrow-right')
-                ->visible(fn () => $user->can('training.exams.setup'))
+                ->visible(fn () => ! $this->trainingPlace->trashed() && $user->can('training.exams.setup'))
                 ->disabled(fn () => $this->hasPendingExam())
                 ->tooltip(fn () => $this->hasPendingExam() ? 'This member already has a pending exam booking.' : 'Forward the member for a practical exam on their primary training position')
-                ->form([
+                ->schema([
                     Select::make('position_id')
                         ->label('Position')
                         ->options(fn () => Position::where('callsign', 'NOT LIKE', '%ATIS%')->orderBy('callsign')->pluck('callsign', 'id'))
@@ -108,15 +111,40 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
                 ->modalDescription('Confirm the details below to forward this member for a practical exam.')
                 ->modalSubmitActionLabel('Forward for Exam'),
 
+            Action::make('restoreTrainingPlace')
+                ->label('Restore Training Place')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('success')
+                ->visible(fn () => $this->trainingPlace->trashed() && $user->can('training-places.restore.*'))
+                ->modalHeading('Restore Training Place')
+                ->modalDescription('This will make the training place active again and re-assign mentoring permissions. The student will not be re-added to any waiting list.')
+                ->modalSubmitActionLabel('Restore')
+                ->requiresConfirmation()
+                ->action(function () {
+                    $studentAccount = $this->trainingPlace->waitingListAccount->account;
+                    $callsign = $this->trainingPlace->trainingPosition->position->callsign;
+
+                    $this->trainingPlace->restore();
+
+                    $studentAccount->addNote('training', "Training place restored on {$callsign}.", Auth::user()->id);
+
+                    Notification::make()
+                        ->title('Training place restored successfully')
+                        ->success()
+                        ->send();
+
+                    $this->redirect(ListTrainingPlaces::getUrl());
+                }),
+
             Action::make('revokeTrainingPlace')
                 ->label('Revoke Training Place')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn () => $user->can('training-places.revoke.*'))
+                ->visible(fn () => ! $this->trainingPlace->trashed() && $user->can('training-places.revoke.*'))
                 ->modalHeading('Revoke Training Place')
                 ->modalDescription('Are you sure you want to revoke this members training place?')
                 ->modalSubmitActionLabel('Revoke Training Place')
-                ->form([
+                ->schema([
                     Textarea::make('reason')
                         ->label('Reason')
                         ->placeholder('Please provide a reason for revoking this training place')
@@ -147,10 +175,10 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
     {
         try {
             // Get the position from the provided ID
-            $position = Position::findOrFail($positionId);
+            $trainingPosition = TrainingPosition::where('position_id', $positionId)->firstOrFail();
             $ctsMember = $this->trainingPlace->waitingListAccount->account->member;
 
-            if (! $position || ! $ctsMember) {
+            if (! $trainingPosition || ! $ctsMember) {
                 Notification::make()
                     ->title('Error')
                     ->danger()
@@ -171,19 +199,19 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
                 return;
             }
 
-            /** @var \App\Models\Mship\Account|null $user */
+            /** @var Account|null $user */
             $user = Auth::user();
 
             // Use the service to forward for exam
             $service = new ExamForwardingService;
-            $service->forwardForExam($ctsMember, $position, $user->id);
+            $service->forwardForExam($ctsMember, $trainingPosition, $user->id);
 
             Notification::make()
                 ->title('Success')
                 ->success()
-                ->body('Exam setup for '.$position->callsign.' has been created.')
+                ->body('Exam setup for '.($trainingPosition->exam_callsign ?? $trainingPosition->position->callsign).' has been created.')
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Error')
                 ->danger()
@@ -192,11 +220,24 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
         }
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
 
-        return $infolist->record($this->trainingPlace)->schema([
-            Section::make('Training Place Details')->schema([
+        return $schema->record($this->trainingPlace)->components([
+            Section::make('This training place is inactive')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->description('This training place is now read only.')
+                ->iconColor('danger')
+                ->collapsible()
+                ->collapsed(true)
+                ->visible(fn (): bool => (bool) $this->trainingPlace->deleted_at)
+                ->columnSpanFull()
+                ->schema([
+                    TextEntry::make('deleted_at')
+                        ->label('Removed on')
+                        ->dateTime('d/m/Y \a\t H:i'),
+                ]),
+            Section::make('Training Place Details')->columnSpanFull()->schema([
                 TextEntry::make('waitingListAccount.account.name')->label('Name'),
                 TextEntry::make('waitingListAccount.account.id')->label('CID'),
                 TextEntry::make('trainingPosition.position.name')->label('Position'),
@@ -238,7 +279,7 @@ class ViewTrainingPlace extends Page implements HasInfolists, HasTable
                         'Completed' => 'success',
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 ViewAction::make()->url(fn ($record) => "https://cts.vatsim.uk/mentors/report.php?id={$record->id}&view=report"),
             ])
             ->emptyStateHeading('No mentoring sessions found');

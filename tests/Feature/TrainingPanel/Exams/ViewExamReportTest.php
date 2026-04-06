@@ -12,6 +12,8 @@ use App\Models\Cts\Member;
 use App\Models\Cts\PracticalResult;
 use App\Models\Mship\Account;
 use App\Models\Mship\Qualification;
+use App\Models\Training\TrainingPosition\TrainingPosition;
+use Filament\Schemas\Schema;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -373,12 +375,11 @@ class ViewExamReportTest extends BaseTrainingPanelTestCase
             ->test(ViewExamReport::class, ['examId' => $this->examBooking->id])
             ->assertSuccessful();
 
-        // Ensure the criteria infolist method exists and returns an Infolist
         $this->assertTrue(method_exists($component->instance(), 'criteriaInfoList'));
 
-        $infolist = new \Filament\Infolists\Infolist($component->instance());
-        $result = $component->instance()->criteriaInfoList($infolist);
-        $this->assertInstanceOf(\Filament\Infolists\Infolist::class, $result);
+        $schema = Schema::make($component->instance());
+        $result = $component->instance()->criteriaInfoList($schema);
+        $this->assertInstanceOf(Schema::class, $result);
     }
 
     #[Test]
@@ -514,6 +515,7 @@ class ViewExamReportTest extends BaseTrainingPanelTestCase
         $position = Position::factory()->create([
             'callsign' => 'EGKK_TWR',
         ]);
+        TrainingPosition::factory()->create(['position_id' => $position->id]);
 
         $exam = ExamBooking::factory()->create([
             'taken' => 1,
