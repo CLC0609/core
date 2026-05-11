@@ -52,6 +52,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'horizon.access',
             'telescope.access',
 
+            // Log Viewer Permissions
+            'log-viewer.*',
+            'log-viewer.access',
+            'log-viewer.download',
+            'log-viewer.delete',
+
             // Training Panel Permissions
             'training.access',
             'training.exams.access',

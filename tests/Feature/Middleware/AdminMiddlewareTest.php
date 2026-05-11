@@ -42,6 +42,36 @@ class AdminMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function test_log_viewer_is_not_available_to_guests()
+    {
+        $this->get(config('log-viewer.route_path'))
+            ->assertRedirect(route('landing'));
+    }
+
+    #[Test]
+    public function test_log_viewer_is_not_available_to_normal_users()
+    {
+        $this->actingAs($this->user)
+            ->get(config('log-viewer.route_path'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function test_log_viewer_is_available_to_authorised_users()
+    {
+        $admin = Account::factory()->create();
+        $admin->givePermissionTo('log-viewer.access');
+
+        $this->actingAs($admin)
+            ->get(config('log-viewer.route_path'))
+            ->assertSuccessful();
+
+        $this->actingAs($this->privacc)
+            ->get(config('log-viewer.route_path'))
+            ->assertSuccessful();
+    }
+
+    #[Test]
     public function test_horizon_is_not_available_to_guests()
     {
         $this->get(config('horizon.path'))

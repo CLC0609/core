@@ -165,6 +165,7 @@ return [
         App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
+        App\Providers\LogViewerServiceProvider::class,
         App\Providers\ResponseMacroServiceProvider::class,
         App\Providers\Filament\AdminPanelProvider::class,
         App\Providers\Filament\TrainingPanelProvider::class,
