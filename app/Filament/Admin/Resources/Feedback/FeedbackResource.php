@@ -6,6 +6,7 @@ use App\Filament\Admin\Forms\Components\AccountSelect;
 use App\Filament\Admin\Resources\Feedback\Pages\ListFeedback;
 use App\Filament\Admin\Resources\Feedback\Pages\ViewFeedback;
 use App\Filament\Admin\Resources\Feedback\Widgets\FeedbackOverview;
+use App\Filament\Support\Actions\CopyTextAction;
 use App\Models\Mship\Feedback\Feedback;
 use App\Models\Mship\Feedback\Form as FeedbackForm;
 use App\Models\Mship\Qualification;
@@ -128,7 +129,8 @@ class FeedbackResource extends Resource
                                 TextEntry::make('response')
                                     ->label('Answer')
                                     ->extraAttributes(['style' => 'white-space: pre-line;'])
-                                    ->state(fn ($record) => $record->response),
+                                    ->state(fn ($record) => $record->response)
+                                    ->suffixAction(fn ($state) => CopyTextAction::make($state)),
                             ]),
                     ]),
             ]);
