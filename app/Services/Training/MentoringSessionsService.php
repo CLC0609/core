@@ -3,6 +3,7 @@
 namespace App\Services\Training;
 
 use App\Models\Cts\Availability;
+use App\Models\Cts\Booking;
 use App\Models\Cts\CancelReason;
 use App\Models\Cts\Member;
 use App\Models\Cts\Session;
@@ -59,6 +60,16 @@ class MentoringSessionsService
                 'taken_to' => $takenTo,
             ]);
 
+            Booking::create([
+                'date' => $availability->date,
+                'from' => $takenFrom,
+                'to' => $takenTo,
+                'position' => $session->position,
+                'member_id' => $availability->student_id,
+                'type' => 'ME',
+                'type_id' => $session->id,
+            ]);
+
             DB::afterCommit(function () use ($session) {
                 $this->notifyParticipants($session, 'accepted');
             });
@@ -94,6 +105,14 @@ class MentoringSessionsService
                 'taken_to' => $takenTo,
             ]);
 
+            Booking::where('type', 'ME')
+                ->where('type_id', $session->id)
+                ->update([
+                    'date' => $availability->date,
+                    'from' => $takenFrom,
+                    'to' => $takenTo,
+                ]);
+
             DB::afterCommit(function () use ($session, $previousDateTime) {
                 $this->notifyParticipants($session, 'rescheduled', [
                     'previousDateTime' => $previousDateTime,
@@ -121,6 +140,10 @@ class MentoringSessionsService
             $session->update([
                 'cancelled_datetime' => now(),
             ]);
+
+            Booking::where('type', 'ME')
+                ->where('type_id', $session->id)
+                ->delete();
 
             CancelReason::create([
                 'sesh_id' => $session->id,
