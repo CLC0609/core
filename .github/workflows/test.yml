@@ -63,7 +63,6 @@ jobs:
 
   test:
     name: ${{ matrix.suite }} Tests (PHP ${{ matrix.php }})
-    needs: lint
     runs-on: ubuntu-latest
     concurrency:
       group: core-test-${{ github.ref }}-${{ matrix.suite }}
