@@ -62,11 +62,10 @@ jobs:
         uses: j178/prek-action@v2
 
   test:
-    name: PHP ${{ matrix.php }} / Composer ${{ matrix.composer }}
-    needs: lint
+    name: ${{ matrix.suite }} Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     concurrency:
-      group: core-test-${{ github.ref }}
+      group: core-test-${{ github.ref }}-${{ matrix.suite }}
       cancel-in-progress: true
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -74,6 +73,7 @@ jobs:
       matrix:
         php: ["8.4"]
         composer: ["v2"]
+        suite: [Feature, Unit]
         experimental: [false]
     steps:
       - name: Checkout Code
@@ -88,11 +88,6 @@ jobs:
           tools: composer:${{ matrix.composer }}
           coverage: none
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
       - name: Composer Cache
         uses: actions/cache@v6
         with:
@@ -103,15 +98,6 @@ jobs:
           restore-keys: |
             composer-${{ matrix.php }}-
             composer-
-
-      - name: Node Cache
-        id: node-cache
-        uses: actions/cache@v6
-        with:
-          path: node_modules
-          key: npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            npm-
 
       - name: Create Databases
         run: |
@@ -125,29 +111,59 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-interaction
 
-      - name: Install assets
-        if: steps.node-cache.outputs.cache-hit != 'true'
-        run: npm ci
-
-      - name: Compile assets
-        run: npm run build
-
       - name: Create Environment File
         run: mv .env.ci .env
 
+      - name: Setup Node
+        if: matrix.suite == 'Feature'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Node Cache
+        if: matrix.suite == 'Feature'
+        id: node-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-
+
+      - name: Install assets
+        if: matrix.suite == 'Feature' && steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Cache Build Assets
+        if: matrix.suite == 'Feature'
+        id: build-cache
+        uses: actions/cache@v6
+        with:
+          path: public/build
+          key: npm-build-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('vite.config.*') }}
+          restore-keys: |
+            npm-build-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Compile assets
+        if: matrix.suite == 'Feature' && steps.build-cache.outputs.cache-hit != 'true'
+        run: npm run build
+
       - name: Publish Telescope
+        if: matrix.suite == 'Feature'
         run: php artisan telescope:publish
 
       - name: Cache Application
+        if: matrix.suite == 'Feature'
         run: |
           php artisan route:cache
           php artisan config:cache
 
       - name: Serve Application
+        if: matrix.suite == 'Feature'
         run: php artisan serve -q &
 
       - name: Execute Tests
-        run: php artisan test --parallel --processes=4 --recreate-databases --log-junit=junit.xml
+        run: php artisan test --parallel --processes=4 --testsuite=${{ matrix.suite }} --recreate-databases --log-junit=junit.xml
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
