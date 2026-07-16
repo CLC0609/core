@@ -48,7 +48,7 @@ class CheckForNewS1ExamPasses extends Command
                 continue;
             }
 
-            Roster::upsert(['account_id' => $coreAccount->id], uniqueBy: ['account_id']);
+            Roster::upsert(['account_id' => $coreAccount->id, 'reason' => 'Added via roster:check-new-s1-exams command'], uniqueBy: ['account_id']);
 
             $this->info("Added account {$coreAccount->id} to the roster.");
         }

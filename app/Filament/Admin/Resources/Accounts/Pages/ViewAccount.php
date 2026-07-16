@@ -103,10 +103,15 @@ class ViewAccount extends BaseViewRecordPage
                     ->name($onRoster ? 'Remove from roster' : 'Add to roster')
                     ->modalHeading($onRoster ? 'Remove from roster' : 'Add to roster')
                     ->action(function () use ($onRoster) {
-                        Roster::withoutGlobalScopes()->where('account_id', $this->record->id)->get()->each->remove();
+                        Roster::withoutGlobalScopes()->where('account_id', $this->record->id)->get()
+                            ->each
+                            ->remove(null);
 
                         if (! $onRoster) {
-                            Roster::create(['account_id' => $this->record->id]);
+                            Roster::create([
+                                'account_id' => $this->record->id,
+                                'reason' => 'Added by '.auth()->user()->id.' via admin panel',
+                            ]);
                         }
 
                         $this->refreshFormData(['roster_status', 'notes']);

@@ -42,7 +42,7 @@ class UpdateRosterGanderControllers extends Command
             });
 
             Roster::upsert(
-                $ganderValidatedAccountIds->map(fn ($value) => ['account_id' => $value])->toArray(),
+                $ganderValidatedAccountIds->map(fn ($value) => ['account_id' => $value, 'reason' => 'Added via roster:gander command'])->toArray(),
                 ['account_id']
             );
 

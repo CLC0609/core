@@ -45,7 +45,7 @@ class OverrideExamReportService
 
             $isObsExam = $practicalResult->examBooking->exam === 'OBS';
             if ($isObsExam && $newResult === ExamResultEnum::Pass && $account->hasState(State::findByCode('DIVISION'))) {
-                Roster::upsert(['account_id' => $account->id], uniqueBy: ['account_id']);
+                Roster::upsert(['account_id' => $account->id, 'reason' => "Added by {$actor->id} via exam override"], uniqueBy: ['account_id']);
             }
         }
 

@@ -116,7 +116,7 @@ class UpdateRoster extends Command
 
         // Not on the roster, need to be on...
         Roster::upsert(
-            $eligible->map(fn ($value) => ['account_id' => $value])->toArray(),
+            $eligible->map(fn ($value) => ['account_id' => $value, 'reason' => 'Added via roster:update command'])->toArray(),
             ['account_id']
         );
 

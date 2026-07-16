@@ -72,6 +72,7 @@ class Renew extends Component
 
         Roster::create([
             'account_id' => auth()->user()->id,
+            'reason' => 'Added by '.auth()->user()->id.' via self-service renewal',
         ]);
 
         session()->flash('success', '✅ You have been reactivated on the roster! Welcome back!');

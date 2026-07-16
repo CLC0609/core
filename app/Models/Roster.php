@@ -34,7 +34,7 @@ class Roster extends Model
 
     protected $table = 'roster';
 
-    protected $fillable = ['account_id', 'restriction_note_id'];
+    protected $fillable = ['account_id', 'restriction_note_id', 'reason'];
 
     protected static function booted(): void
     {
@@ -72,6 +72,7 @@ class Roster extends Model
                 'original_updated_at' => $this->updated_at,
                 'removed_by' => auth()->user()?->getKey(),
                 'roster_update_id' => $update?->id,
+                'reason' => $this->reason,
             ]);
 
             $this->delete();
