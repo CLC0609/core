@@ -64,6 +64,10 @@ class Kernel extends ConsoleKernel
             ->hourlyAt(45)
             ->withoutOverlapping();
 
+        $schedule->command('training:check-for-expired-training-place-offers')
+            ->hourlyAt(55)
+            ->graceTimeInMinutes(15);
+
         // === By Day === //
         $schedule->command('telescope:prune')
             ->dailyAt('03:30')
@@ -112,10 +116,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('training-places:check-availability')
             ->dailyAt('10:00')
-            ->graceTimeInMinutes(15);
-
-        $schedule->command('training:check-for-expired-training-place-offers')
-            ->dailyAt('11:00')
             ->graceTimeInMinutes(15);
 
         // === By Quarter === //
